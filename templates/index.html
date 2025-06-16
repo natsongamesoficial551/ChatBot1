@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Chat Natan AI - LLaMA 3 Ollama</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <div id="sidebar">
+        <h2>📜 Conversas</h2>
+        <ul id="chatHistory">
+            <li onclick="startNewChat()">➕ Novo Chat</li>
+        </ul>
+    </div>
+
+    <div id="main">
+        <div class="chat-box" id="chatBox">
+            <div class="message bot"><strong>Natan AI:</strong> Olá! Como posso te ajudar hoje?</div>
+        </div>
+
+        <textarea id="userInput" rows="3" placeholder="Digite sua mensagem..."></textarea>
+        <button onclick="sendMessage()">Enviar</button>
+    </div>
+
+    <script>
+        // Enviar ao pressionar Enter
+        document.getElementById('userInput').addEventListener('keydown', function (event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+            }
+        });
+
+        let chatHistory = [];
+        let currentChat = [];
+
+        function startNewChat() {
+            if (currentChat.length > 0) {
+                const historyList = document.getElementById('chatHistory');
+                const chatTitle = "Chat " + (chatHistory.length + 1);
+                const li = document.createElement('li');
+                li.textContent = chatTitle;
+                li.onclick = () => loadChat(chatHistory.length);
+                historyList.appendChild(li);
+
+                chatHistory.push([...currentChat]);
+                currentChat = [];
+                document.getElementById('chatBox').innerHTML = `<div class="message bot"><strong>Natan AI:</strong> Olá! Como posso te ajudar hoje?</div>`;
+            }
+        }
+
+        function loadChat(index) {
+            const chatBox = document.getElementById('chatBox');
+            chatBox.innerHTML = '';
+            chatHistory[index].forEach(msg => {
+                chatBox.innerHTML += msg;
+            });
+        }
+
+        async function sendMessage() {
+            const inputBox = document.getElementById('userInput');
+            const chatBox = document.getElementById('chatBox');
+            const userMessage = inputBox.value.trim();
+
+            if (!userMessage) return;
+
+            const userHTML = `<div class="message user"><strong>Você:</strong> ${userMessage}</div>`;
+            chatBox.innerHTML += userHTML;
+            currentChat.push(userHTML);
+            inputBox.value = '';
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            try {
+                const response = await fetch('/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ mensagem: userMessage })
+                });
+
+                const data = await response.json();
+
+                if (data.resposta) {
+                    const botHTML = `<div class="message bot"><strong>Natan AI:</strong> ${data.resposta}</div>`;
+                    chatBox.innerHTML += botHTML;
+                    currentChat.push(botHTML);
+                    chatBox.scrollTop = chatBox.scrollHeight;
+                } else if (data.erro) {
+                    chatBox.innerHTML += `<div class="message bot text-danger"><strong>Erro:</strong> ${data.erro}</div>`;
+                }
+            } catch (error) {
+                chatBox.innerHTML += `<div class="message bot text-danger"><strong>Erro de rede:</strong> ${error}</div>`;
+            }
+        }
+    </script>
+
+</body>
+</html>
