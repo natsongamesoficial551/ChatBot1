@@ -4,7 +4,7 @@ import os
 
 app = Flask(__name__)
 
-OPENROUTER_API_KEY = os.getenv("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")  # <-- Correto agora!
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")  # <-- Correto agora!
 MODEL_NAME = "deepseek/deepseek-r1-0528-qwen3-8b:free"
 
 @app.route("/")
@@ -19,7 +19,7 @@ def chat():
         headers = {
             "Authorization": f"Bearer {OPENROUTER_API_KEY}",
             "Content-Type": "application/json",
-            "HTTP-Referer": "http://localhost:5000",
+            "HTTP-Referer": "https://natan-ai.onrender.com",
             "X-Title": "Chat Natan AI"
         }
 
