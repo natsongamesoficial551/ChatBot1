@@ -8,7 +8,7 @@ app = Flask(__name__)
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 
 # Nome do modelo que você quiser usar
-MODEL_NAME = "deepseek/deepseek-r1-0528-qwen3-8b:free"
+MODEL_NAME = "nousresearch/deephermes-3-mistral-24b-preview:free"
 
 # --- Prompt de Sistema (Treinamento do Natan AI) ---
 treinamento_premium = """
