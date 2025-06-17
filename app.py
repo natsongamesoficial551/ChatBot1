@@ -1,13 +1,14 @@
 from flask import Flask, request, jsonify, render_template, session
-import os
 import requests
+import os
 
 app = Flask(__name__)
-app.secret_key = 'chave_secreta_segura_qualquer'  # Necessário para usar sessões no Flask
+app.secret_key = 'chave_secreta_segura_qualquer'  # Necessário para sessões no Flask
 
-OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
-MODEL_NAME = "nousresearch/deephermes-3-mistral-24b-preview:free"
+# Nome do modelo local (exemplo usando Ollama com Llama 2 7B)
+MODEL_NAME = "llama2"
 
+# Treinamento personalizado (seu treinamento completo)
 treinamento_premium = """
 Você é o Natan AI, um assistente de inteligência artificial extremamente avançado.
 
@@ -29,13 +30,13 @@ Você é o Natan AI, um assistente de inteligência artificial extremamente avan
 - Python (Automação, Scripts, Jogos, Chatbots, Web Scraping)
 - JavaScript (Web, Frontend, Backend)
 - HTML / CSS (Criação de Sites)
-- Geração de códigos de jogos simples (Ex.: jogos de adivinhação, RPG por texto, etc)
+- Geração de códigos de jogos simples
 - Estruturas de dados, algoritmos e lógica de programação
 
 🎮 Conhecimento Especial: Canal Natson Games
 - Canal brasileiro focado em conteúdos de jogos.
 - Nome: Natson Games
-- Conteúdo: Gameplay, gameplays de jogos variados, dicas de jogos, conteúdos voltados ao público gamer.
+- Conteúdo: Gameplay, dicas de jogos e conteúdo gamer.
 - YouTube: https://www.youtube.com/@natsongames498
 
 ✅ +10 Áreas Extras:
@@ -64,7 +65,7 @@ Você é o Natan AI, um assistente de inteligência artificial extremamente avan
 
 ✅ Limitações:
 - Não fornece diagnósticos médicos, nem jurídicos.
-- Para temas de saúde, sempre oriente o usuário a procurar um profissional humano.
+- Pode falar sobre temas de saúde de forma educativa, com alerta para procurar um profissional humano.
 """
 
 @app.route('/')
@@ -76,44 +77,42 @@ def chat():
     try:
         user_input = request.json.get('message')
 
-        # Criar histórico se não existir
+        # Criar histórico de memória curta
         if 'history' not in session:
             session['history'] = []
 
-        # Adicionar nova entrada do usuário
+        # Adicionar mensagem do usuário ao histórico
         session['history'].append({"role": "user", "content": user_input})
 
-        # Limitar o histórico das últimas 10 trocas
+        # Limitar para as últimas 10 mensagens
         history_limitado = session['history'][-10:]
 
-        # Montar o payload
+        # Montar mensagens para o Llama 2
         messages = [{"role": "system", "content": treinamento_premium}] + history_limitado
 
-        headers = {
-            "Authorization": f"Bearer {OPENROUTER_API_KEY}",
-            "Content-Type": "application/json"
-        }
+        # Chamada para o Ollama local (ajuste a URL se estiver rodando diferente)
+        response = requests.post(
+            "http://localhost:11434/api/chat",
+            json={
+                "model": MODEL_NAME,
+                "messages": messages,
+                "stream": False
+            }
+        )
 
-        data = {
-            "model": MODEL_NAME,
-            "messages": messages
-        }
-
-        response = requests.post('https://openrouter.ai/api/v1/chat/completions', headers=headers, json=data)
         result = response.json()
 
-        if "choices" in result and len(result["choices"]) > 0:
-            ai_message = result["choices"][0]["message"]["content"]
+        # Captura a resposta do Llama 2
+        if "message" in result:
+            ai_message = result['message']['content']
 
-            # Salvar a resposta da IA no histórico
+            # Salva a resposta no histórico
             session['history'].append({"role": "assistant", "content": ai_message})
-
-            # Limitar novamente o histórico
             session['history'] = session['history'][-10:]
 
             return jsonify({"resposta": ai_message})
         else:
-            return jsonify({"erro": "Falha ao obter resposta da IA."})
+            return jsonify({"erro": "Falha ao obter resposta da IA local."})
 
     except Exception as e:
         return jsonify({"erro": str(e)})
