@@ -193,25 +193,25 @@
             }
         });
 
-        let chatHistory = [];
-        let currentChat = [];
+        let chatHistory = [[]];  // Array de arrays, cada sub-array é um chat
+        let currentChatIndex = 0;
 
         function startNewChat() {
-            if (currentChat.length > 0) {
-                const historyList = document.getElementById('chatHistory');
-                const chatTitle = "Chat " + (chatHistory.length + 1);
-                const li = document.createElement('li');
-                li.textContent = chatTitle;
-                li.onclick = () => loadChat(chatHistory.length);
-                historyList.appendChild(li);
+            chatHistory.push([]);
+            currentChatIndex = chatHistory.length - 1;
 
-                chatHistory.push([...currentChat]);
-                currentChat = [];
-                document.getElementById('chatBox').innerHTML = `<div class="message bot"><strong>Natan AI:</strong> Olá! Como posso te ajudar hoje?</div>`;
-            }
+            const historyList = document.getElementById('chatHistory');
+            const li = document.createElement('li');
+            li.textContent = "Chat " + currentChatIndex;
+            li.onclick = () => loadChat(currentChatIndex);
+            historyList.appendChild(li);
+
+            document.getElementById('chatBox').innerHTML = `<div class="message bot"><strong>Natan AI:</strong> Olá! Como posso te ajudar hoje?</div>`;
+            chatHistory[currentChatIndex].push(`<div class="message bot"><strong>Natan AI:</strong> Olá! Como posso te ajudar hoje?</div>`);
         }
 
         function loadChat(index) {
+            currentChatIndex = index;
             const chatBox = document.getElementById('chatBox');
             chatBox.innerHTML = '';
             chatHistory[index].forEach(msg => {
@@ -228,7 +228,7 @@
 
             const userHTML = `<div class="message user"><strong>Você:</strong> ${userMessage}</div>`;
             chatBox.innerHTML += userHTML;
-            currentChat.push(userHTML);
+            chatHistory[currentChatIndex].push(userHTML);
             inputBox.value = '';
             chatBox.scrollTop = chatBox.scrollHeight;
 
@@ -244,7 +244,7 @@
                 if (data.resposta) {
                     const botHTML = `<div class="message bot"><strong>Natan AI:</strong> ${data.resposta}</div>`;
                     chatBox.innerHTML += botHTML;
-                    currentChat.push(botHTML);
+                    chatHistory[currentChatIndex].push(botHTML);
                     chatBox.scrollTop = chatBox.scrollHeight;
                 } else if (data.erro) {
                     chatBox.innerHTML += `<div class="message bot text-danger"><strong>Erro:</strong> ${data.erro}</div>`;
