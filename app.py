@@ -3,8 +3,8 @@ import requests
 
 app = Flask(__name__)
 
-OPENROUTER_API_KEY = "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"
-MODEL_NAME = "nousresearch/deephermes-3-mistral-24b-preview:free"
+OPENROUTER_API_KEY = "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"
+MODEL_NAME = "deepseek/deepseek-r1-0528-qwen3-8b:free"
 
 @app.route("/")
 def index():
