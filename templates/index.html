@@ -6,101 +6,140 @@
     <style>
         body {
             margin: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #1e1e1e;
-            color: #f0f0f0;
+            font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #0e0e0f;
+            color: #ffffff;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
         }
 
         #sidebar {
-            width: 220px;
-            background-color: #2d2d2d;
-            height: 100vh;
-            position: fixed;
-            left: 0;
-            top: 0;
+            width: 260px;
+            background-color: #1c1c1e;
             padding: 20px;
-            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.3);
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
         }
 
         #sidebar h2 {
-            font-size: 18px;
-            margin-bottom: 15px;
+            margin-top: 0;
+            font-size: 1.2em;
+            color: #00c3ff;
         }
 
         #sidebar ul {
             list-style: none;
             padding: 0;
+            flex-grow: 1;
+            overflow-y: auto;
         }
 
         #sidebar li {
             padding: 10px;
-            margin-bottom: 8px;
-            background-color: #3a3a3a;
-            border-radius: 6px;
+            margin-bottom: 10px;
+            background-color: #2b2b2e;
+            border-radius: 8px;
             cursor: pointer;
             transition: background 0.2s;
         }
 
         #sidebar li:hover {
-            background-color: #505050;
+            background-color: #3a3a3e;
         }
 
         #main {
-            margin-left: 240px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
             padding: 20px;
         }
 
+        h1 {
+            margin-top: 0;
+            color: #00ff99;
+            font-size: 1.5em;
+        }
+
         .chat-box {
-            max-height: 70vh;
+            flex-grow: 1;
             overflow-y: auto;
-            padding: 10px;
-            background-color: #292929;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            background-color: #1a1a1d;
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.7);
+            scroll-behavior: smooth;
         }
 
         .message {
-            margin: 10px 0;
+            margin: 12px 0;
+            line-height: 1.5;
+            padding: 10px;
+            border-radius: 10px;
         }
 
         .message.user {
+            background-color: #444; /* Cinza para usuário */
             text-align: right;
-            color: #00c3ff;
         }
 
         .message.bot {
+            background-color: #0f0f0f; /* Preto escuro para a IA */
             text-align: left;
-            color: #00ff8c;
         }
 
         textarea {
             width: 100%;
-            padding: 10px;
-            border-radius: 6px;
             border: none;
-            resize: none;
+            border-radius: 8px;
+            padding: 12px;
             margin-top: 10px;
-            background-color: #3a3a3a;
-            color: #ffffff;
+            background-color: #2d2d31;
+            color: #fff;
+            resize: none;
+            height: 80px;
+            outline: none;
+            transition: box-shadow 0.2s;
+        }
+
+        textarea:focus {
+            box-shadow: 0 0 10px #00c3ff;
         }
 
         button {
             margin-top: 10px;
-            padding: 10px 20px;
+            padding: 12px 20px;
             background-color: #00c3ff;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
             color: #000;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
             font-weight: bold;
+            transition: background 0.2s, transform 0.1s;
         }
 
         button:hover {
             background-color: #00a3d6;
+            transform: translateY(-2px);
         }
 
         .text-danger {
             color: #ff4f4f;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                flex-direction: column;
+            }
+            #sidebar {
+                width: 100%;
+                height: auto;
+                box-shadow: none;
+            }
+            #main {
+                margin-left: 0;
+            }
         }
     </style>
 </head>
@@ -119,7 +158,7 @@
             <div class="message bot"><strong>Natan AI:</strong> Olá! Como posso te ajudar hoje?</div>
         </div>
 
-        <textarea id="userInput" rows="3" placeholder="Digite sua mensagem..."></textarea>
+        <textarea id="userInput" placeholder="Digite sua mensagem..."></textarea>
         <button onclick="sendMessage()">Enviar</button>
     </div>
 
@@ -174,7 +213,7 @@
                 const response = await fetch('/chat', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ message: userMessage })  // Corrigido aqui ✅
+                    body: JSON.stringify({ message: userMessage })
                 });
 
                 const data = await response.json();
