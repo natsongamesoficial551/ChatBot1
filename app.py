@@ -1,121 +1,107 @@
-from flask import Flask, request, jsonify, render_template, session
+from flask import Flask, request, jsonify, render_template
 import requests
-import os
 
 app = Flask(__name__)
-app.secret_key = 'chave_secreta_segura_qualquer'  # Necessário para sessões no Flask
 
-# Nome do modelo local (exemplo usando Ollama com Llama 2 7B)
-MODEL_NAME = "llama2"
+OLLAMA_API_URL = 'http://localhost:11434/api/generate'
+HISTORICO_MAX = 10  # Memória de curto prazo (últimas 10 mensagens)
 
-# Treinamento personalizado (seu treinamento completo)
+historico_conversa = []
+
+# -------- Treinamento Premium --------
 treinamento_premium = """
 Você é o Natan AI, um assistente de inteligência artificial extremamente avançado.
 
-🎯 Seu objetivo: ajudar os usuários com respostas detalhadas, claras, didáticas e baseadas em conhecimentos reais.
+Idioma:
+- Responda sempre 100% em português brasileiro. Nunca use inglês, mesmo que a pergunta venha em outro idioma.
 
-✅ Áreas de Especialização:
+Áreas de conhecimento:
+- História, Geografia, Matemática, Português, Física, Química, Biologia, Programação, SEO, Marketing Digital, Psicologia, Finanças, Cultura Brasileira, Canal Natson Games, entre outras.
 
-📚 Educação Escolar:
-- História (Antiga, Moderna, Contemporânea, Brasil e Geral)
-- Geografia (Física, Humana, Cartografia, Atualidades Geopolíticas)
-- Matemática (Básica, Avançada, Álgebra, Geometria, Cálculo)
-- Português (Gramática, Redação, Literatura)
-- Física (Mecânica, Termologia, Óptica, Eletromagnetismo)
-- Química (Orgânica, Inorgânica, Físico-Química, Ambiental)
-- Biologia (Genética, Ecologia, Corpo Humano, Evolução)
-- Educação Física (Conceitos, Exercícios, Fisiologia, Esportes)
+Estilo de resposta:
+- Sempre didático, claro, objetivo.
+- Linguagem simples e acessível.
+- Respostas curtas quando possível.
+- Respostas longas: use tópicos e espaços entre parágrafos.
+- Nunca use termos técnicos sem explicar.
+- Mantenha um tom humano, educado e amigável.
+- Evite começar respostas com "Bem-vindo" de forma repetitiva.
+- Caso o usuário peça por respostas curtas, em 1 linha ou simples: Responda de forma extremamente curta e direta.
 
-💻 Programação:
-- Python (Automação, Scripts, Jogos, Chatbots, Web Scraping)
-- JavaScript (Web, Frontend, Backend)
-- HTML / CSS (Criação de Sites)
-- Geração de códigos de jogos simples
-- Estruturas de dados, algoritmos e lógica de programação
+Limitações:
+- Não oferece diagnósticos médicos ou jurídicos.
+- Pode falar de saúde apenas de forma educativa, sempre indicando procurar um profissional humano.
 
-🎮 Conhecimento Especial: Canal Natson Games
-- Canal brasileiro focado em conteúdos de jogos.
-- Nome: Natson Games
-- Conteúdo: Gameplay, dicas de jogos e conteúdo gamer.
-- YouTube: https://www.youtube.com/@natsongames498
-
-✅ +10 Áreas Extras:
-- Marketing Digital
-- SEO
-- Empreendedorismo
-- Finanças Pessoais
-- Psicologia Comportamental
-- Inteligência Emocional
-- Desenvolvimento de Carreira
-- Suporte Técnico Geral
-- Dicas de Produtividade
-- Criação de Conteúdo Online
-
-✅ Partes 17 a 20:
-- Aprendizado de Idiomas
-- Ferramentas Digitais
-- Criador de Conteúdo Criativo
-- Aprendizado Contínuo e Fontes Confiáveis
-
-✅ Estilo de resposta:
-- Frases curtas e simples.
-- Separe em tópicos.
-- Espaços entre parágrafos.
-- Sempre linguagem leve, acessível, e fácil de entender (ideal para TDAH).
-
-✅ Limitações:
-- Não fornece diagnósticos médicos, nem jurídicos.
-- Pode falar sobre temas de saúde de forma educativa, com alerta para procurar um profissional humano.
+Mini Dicionário de Cultura Brasileira:
+- Miojo: Macarrão instantâneo de preparo rápido.
+- Feijoada: Prato típico com feijão preto e carnes.
+- Coxinha: Salgado frito recheado de frango.
+- Brigadeiro: Doce de chocolate com granulado.
+- Churrasco: Carne assada na brasa.
+- Guaraná: Refrigerante típico brasileiro.
+- Açaí: Fruta amazônica servida gelada.
+- Pão de Queijo: Pão mineiro feito com queijo.
+- Pastel: Massa frita com recheio.
+- Farofa: Farinha de mandioca com temperos.
+- Carnaval: Festa popular com samba e desfiles.
+- Futebol: Esporte mais amado do Brasil.
 """
 
 @app.route('/')
-def index():
+def home():
     return render_template('index.html')
 
-@app.route('/chat', methods=['POST'])
+@app.route('/api/chat', methods=['POST'])
 def chat():
+    global historico_conversa
+
+    mensagem_usuario = request.json.get('mensagem', '').strip()
+
+    if not mensagem_usuario:
+        return jsonify({'error': 'Mensagem vazia. Por favor, envie uma pergunta.'}), 400
+
+    # Atualizar memória de curto prazo
+    historico_conversa.append({"role": "user", "content": mensagem_usuario})
+    if len(historico_conversa) > HISTORICO_MAX:
+        historico_conversa = historico_conversa[-HISTORICO_MAX:]
+
+    # Se o usuário pedir resposta curta
+    prompt_resposta_curta = ""
+    if "responda em 1 linha" in mensagem_usuario.lower() or "resposta fácil" in mensagem_usuario.lower() or "resposta simples" in mensagem_usuario.lower():
+        prompt_resposta_curta = "\nIMPORTANTE: Responda essa pergunta com no máximo 1 linha, de forma extremamente simples e objetiva."
+
+    # Remover mensagens com "Bem-vindo" da memória
+    historico_filtrado = []
+    for msg in historico_conversa:
+        if "bem-vindo" not in msg["content"].lower():
+            historico_filtrado.append(msg)
+    historico_conversa = historico_filtrado[-HISTORICO_MAX:]
+
+    # Monta o histórico para o prompt
+    historico_texto = ""
+    for msg in historico_conversa:
+        historico_texto += f"{msg['role'].upper()}: {msg['content']}\n"
+
+    prompt_final = f"{treinamento_premium}\n\nHISTÓRICO DE CONVERSA:\n{historico_texto}\n\nPergunta atual:\n{mensagem_usuario}\n{prompt_resposta_curta}"
+
+    payload = {
+        "model": "openchat:latest",
+        "prompt": prompt_final,
+        "stream": False
+    }
+
     try:
-        user_input = request.json.get('message')
+        resposta_api = requests.post(OLLAMA_API_URL, json=payload)
+        resposta_api.raise_for_status()
+        dados_resposta = resposta_api.json()
+        resposta_texto = dados_resposta.get('response', 'Desculpe, não consegui gerar uma resposta.')
 
-        # Criar histórico de memória curta
-        if 'history' not in session:
-            session['history'] = []
+        historico_conversa.append({"role": "assistant", "content": resposta_texto})
 
-        # Adicionar mensagem do usuário ao histórico
-        session['history'].append({"role": "user", "content": user_input})
-
-        # Limitar para as últimas 10 mensagens
-        history_limitado = session['history'][-10:]
-
-        # Montar mensagens para o Llama 2
-        messages = [{"role": "system", "content": treinamento_premium}] + history_limitado
-
-        # Chamada para o Ollama local (ajuste a URL se estiver rodando diferente)
-        response = requests.post(
-            "http://localhost:11434/api/chat",
-            json={
-                "model": MODEL_NAME,
-                "messages": messages,
-                "stream": False
-            }
-        )
-
-        result = response.json()
-
-        # Captura a resposta do Llama 2
-        if "message" in result:
-            ai_message = result['message']['content']
-
-            # Salva a resposta no histórico
-            session['history'].append({"role": "assistant", "content": ai_message})
-            session['history'] = session['history'][-10:]
-
-            return jsonify({"resposta": ai_message})
-        else:
-            return jsonify({"erro": "Falha ao obter resposta da IA local."})
+        return jsonify({'response': resposta_texto})
 
     except Exception as e:
-        return jsonify({"erro": str(e)})
+        return jsonify({'error': f'Erro: {str(e)}'}), 500
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=5000)

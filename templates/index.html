@@ -3,257 +3,139 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Natan AI - Chat Inteligente</title>
+    <title>Natan AI - Assistente Inteligente</title>
     <style>
         body {
+            background-color: #f2f4f8;
+            font-family: Arial, sans-serif;
             margin: 0;
-            font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: #0e0e0f;
-            color: #ffffff;
-            display: flex;
-            flex-direction: row;
-            height: 100vh;
-            overflow: hidden;
-        }
-
-        #sidebar {
-            width: 260px;
-            background-color: #1c1c1e;
-            padding: 20px;
-            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.5);
-            display: flex;
-            flex-direction: column;
-        }
-
-        #sidebar h2 {
-            margin-top: 0;
-            font-size: 1.2em;
-            color: #00c3ff;
-        }
-
-        #sidebar ul {
-            list-style: none;
             padding: 0;
-            flex-grow: 1;
-            overflow-y: auto;
         }
-
-        #sidebar li {
-            padding: 10px;
-            margin-bottom: 10px;
-            background-color: #2b2b2e;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: background 0.2s;
+        header {
+            background-color: #007BFF;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            font-size: 28px;
+            font-weight: bold;
         }
-
-        #sidebar li:hover {
-            background-color: #3a3a3e;
-        }
-
-        #main {
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
-            padding: 10px;
-        }
-
-        h1 {
-            margin-top: 0;
-            color: #00ff99;
-            font-size: 1.5em;
-        }
-
-        .chat-box {
-            flex-grow: 1;
-            overflow-y: auto;
-            background-color: #1a1a1d;
-            padding: 10px;
-            border-radius: 12px;
-            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.7);
-            scroll-behavior: smooth;
-        }
-
-        .message {
-            margin: 8px 0;
-            line-height: 1.5;
-            padding: 8px;
+        #chat-box {
+            width: 90%;
+            max-width: 900px;
+            margin: 30px auto;
+            background-color: white;
             border-radius: 10px;
-            word-wrap: break-word;
+            padding: 20px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            overflow-y: auto;
+            max-height: 600px;
         }
-
-        .message.user {
-            background-color: #444;
+        .user-msg, .bot-msg {
+            margin-bottom: 15px;
+            padding: 12px;
+            border-radius: 8px;
+            line-height: 1.5;
+        }
+        .user-msg {
+            background-color: #d1e7dd;
             text-align: right;
         }
-
-        .message.bot {
-            background-color: #0f0f0f;
+        .bot-msg {
+            background-color: #f8d7da;
             text-align: left;
         }
-
-        textarea {
-            width: 100%;
-            border: none;
+        #input-form {
+            width: 90%;
+            max-width: 900px;
+            margin: 10px auto;
+            display: flex;
+        }
+        #mensagem {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #ccc;
             border-radius: 8px;
-            padding: 10px;
-            margin-top: 8px;
-            background-color: #2d2d31;
-            color: #fff;
-            resize: none;
-            height: 60px;
-            outline: none;
-            font-size: 1em;
+            font-size: 16px;
         }
-
-        textarea:focus {
-            box-shadow: 0 0 10px #00c3ff;
-        }
-
         button {
-            margin-top: 8px;
-            padding: 10px 16px;
-            background-color: #00c3ff;
-            color: #000;
+            padding: 12px 20px;
+            background-color: #007BFF;
+            color: white;
             border: none;
             border-radius: 8px;
             cursor: pointer;
-            font-weight: bold;
-            transition: background 0.2s, transform 0.1s;
-            font-size: 1em;
+            margin-left: 10px;
         }
-
         button:hover {
-            background-color: #00a3d6;
-            transform: translateY(-2px);
+            background-color: #0056b3;
         }
-
-        .text-danger {
-            color: #ff4f4f;
-        }
-
-        @media (max-width: 768px) {
-            body {
-                flex-direction: column;
-                height: auto;
-                overflow: visible;
-            }
-
-            #sidebar {
-                width: 100%;
-                height: auto;
-                box-shadow: none;
-                padding: 10px;
-            }
-
-            #main {
-                padding: 10px;
-            }
-
-            textarea {
-                height: 80px;
-                font-size: 1.1em;
-            }
-
-            button {
-                width: 100%;
-                font-size: 1.1em;
-            }
-
-            .chat-box {
-                max-height: 60vh;
-            }
+        .placeholder-message {
+            text-align: center;
+            color: #6c757d;
+            margin-top: 20px;
+            font-style: italic;
         }
     </style>
 </head>
 <body>
 
-    <div id="sidebar">
-        <h2>📜 Conversas</h2>
-        <ul id="chatHistory">
-            <li onclick="startNewChat()">➕ Novo Chat</li>
-        </ul>
+<header>Natan AI - Assistente Inteligente</header>
+
+<div id="chat-box">
+    <div class="placeholder-message">
+        🔎 Comece a conversa digitando sua pergunta abaixo...
     </div>
+</div>
 
-    <div id="main">
-        <h1>🤖 Chat Natan AI</h1>
-        <div class="chat-box" id="chatBox">
-            <div class="message bot"><strong>Natan AI:</strong> Olá! Como posso te ajudar hoje?</div>
-        </div>
+<form id="input-form">
+    <input type="text" id="mensagem" value="Olá Natan AI, Mande as mensagens em português 100%" autocomplete="off">
+    <button type="submit">Enviar</button>
+</form>
 
-        <textarea id="userInput" placeholder="Digite sua mensagem..."></textarea>
-        <button onclick="sendMessage()">Enviar</button>
-    </div>
+<script>
+document.getElementById('input-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const mensagem = document.getElementById('mensagem').value.trim();
+    if (!mensagem) return;
 
-    <script>
-        document.getElementById('userInput').addEventListener('keydown', function (event) {
-            if (event.key === 'Enter' && !event.shiftKey) {
-                event.preventDefault();
-                sendMessage();
-            }
+    const chatBox = document.getElementById('chat-box');
+
+    // Remove a mensagem de placeholder se ainda existir
+    const placeholder = document.querySelector('.placeholder-message');
+    if (placeholder) placeholder.remove();
+
+    // Exibe a mensagem do usuário
+    chatBox.innerHTML += `<div class="user-msg">${mensagem}</div>`;
+    document.getElementById('mensagem').value = '';
+
+    try {
+        const response = await fetch('/api/chat', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({mensagem})
         });
 
-        let chatHistory = [[]];  // Array de arrays, cada sub-array é um chat
-        let currentChatIndex = 0;
-
-        function startNewChat() {
-            chatHistory.push([]);
-            currentChatIndex = chatHistory.length - 1;
-
-            const historyList = document.getElementById('chatHistory');
-            const li = document.createElement('li');
-            li.textContent = "Chat " + currentChatIndex;
-            li.onclick = () => loadChat(currentChatIndex);
-            historyList.appendChild(li);
-
-            document.getElementById('chatBox').innerHTML = `<div class="message bot"><strong>Natan AI:</strong> Olá! Como posso te ajudar hoje?</div>`;
-            chatHistory[currentChatIndex].push(`<div class="message bot"><strong>Natan AI:</strong> Olá! Como posso te ajudar hoje?</div>`);
+        const data = await response.json();
+        if (data.response) {
+            chatBox.innerHTML += `<div class="bot-msg">${data.response.replace(/\n/g, '<br>')}</div>`;
+        } else if (data.error) {
+            chatBox.innerHTML += `<div class="bot-msg">Erro: ${data.error}</div>`;
         }
+    } catch (error) {
+        chatBox.innerHTML += `<div class="bot-msg">Erro ao conectar ao servidor Flask.</div>`;
+    }
 
-        function loadChat(index) {
-            currentChatIndex = index;
-            const chatBox = document.getElementById('chatBox');
-            chatBox.innerHTML = '';
-            chatHistory[index].forEach(msg => {
-                chatBox.innerHTML += msg;
-            });
-        }
+    chatBox.scrollTop = chatBox.scrollHeight;
+});
 
-        async function sendMessage() {
-            const inputBox = document.getElementById('userInput');
-            const chatBox = document.getElementById('chatBox');
-            const userMessage = inputBox.value.trim();
-
-            if (!userMessage) return;
-
-            const userHTML = `<div class="message user"><strong>Você:</strong> ${userMessage}</div>`;
-            chatBox.innerHTML += userHTML;
-            chatHistory[currentChatIndex].push(userHTML);
-            inputBox.value = '';
-            chatBox.scrollTop = chatBox.scrollHeight;
-
-            try {
-                const response = await fetch('/chat', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ message: userMessage })
-                });
-
-                const data = await response.json();
-
-                if (data.resposta) {
-                    const botHTML = `<div class="message bot"><strong>Natan AI:</strong> ${data.resposta}</div>`;
-                    chatBox.innerHTML += botHTML;
-                    chatHistory[currentChatIndex].push(botHTML);
-                    chatBox.scrollTop = chatBox.scrollHeight;
-                } else if (data.erro) {
-                    chatBox.innerHTML += `<div class="message bot text-danger"><strong>Erro:</strong> ${data.erro}</div>`;
-                }
-            } catch (error) {
-                chatBox.innerHTML += `<div class="message bot text-danger"><strong>Erro de rede:</strong> ${error}</div>`;
-            }
-        }
-    </script>
+// Permite enviar com Enter (sem precisar clicar no botão)
+document.getElementById('mensagem').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        document.getElementById('input-form').dispatchEvent(new Event('submit'));
+    }
+});
+</script>
 
 </body>
 </html>
