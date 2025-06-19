@@ -85,7 +85,7 @@ def chat():
     prompt_final = f"{treinamento_premium}\n\nHISTÓRICO DE CONVERSA:\n{historico_texto}\n\nPergunta atual:\n{mensagem_usuario}\n{prompt_resposta_curta}"
 
     payload = {
-        "model": "openchat:latest",
+        "model": "mistral:latest",
         "prompt": prompt_final,
         "stream": False
     }
