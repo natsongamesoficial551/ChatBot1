@@ -4,7 +4,7 @@ import requests
 app = Flask(__name__)
 
 # -------- Together AI Config --------
-TOGETHER_API_URL = 'https://api.together.xyz/v1/completions'
+TOGETHER_API_URL = 'https://api.together.xyz/v1/chat/completions'
 TOGETHER_API_KEY = '2cf51a2b235f73a6fac6335f527a29e8e893646c5b381a0c791c1c99ec2b31d1'
 TOGETHER_MODEL = 'meta-llama/Llama-3-70b-instruct-turbo'
 
