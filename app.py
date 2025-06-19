@@ -3,7 +3,11 @@ import requests
 
 app = Flask(__name__)
 
-OLLAMA_API_URL = 'http://localhost:11434/api/generate'
+# -------- Together AI Config --------
+TOGETHER_API_URL = 'https://api.together.xyz/v1/completions'
+TOGETHER_API_KEY = '2cf51a2b235f73a6fac6335f527a29e8e893646c5b381a0c791c1c99ec2b31d1'
+TOGETHER_MODEL = 'meta-llama/Llama-3-70b-instruct-turbo'
+
 HISTORICO_MAX = 10  # Memória de curto prazo (últimas 10 mensagens)
 
 historico_conversa = []
@@ -84,17 +88,25 @@ def chat():
 
     prompt_final = f"{treinamento_premium}\n\nHISTÓRICO DE CONVERSA:\n{historico_texto}\n\nPergunta atual:\n{mensagem_usuario}\n{prompt_resposta_curta}"
 
+    # Configuração para a API do Together AI
     payload = {
-        "model": "mistral:latest",
+        "model": TOGETHER_MODEL,
         "prompt": prompt_final,
-        "stream": False
+        "max_tokens": 512,
+        "temperature": 0.7,
+        "stop": ["USER:", "ASSISTANT:"]
+    }
+
+    headers = {
+        "Authorization": f"Bearer {TOGETHER_API_KEY}",
+        "Content-Type": "application/json"
     }
 
     try:
-        resposta_api = requests.post(OLLAMA_API_URL, json=payload)
+        resposta_api = requests.post(TOGETHER_API_URL, json=payload, headers=headers)
         resposta_api.raise_for_status()
         dados_resposta = resposta_api.json()
-        resposta_texto = dados_resposta.get('response', 'Desculpe, não consegui gerar uma resposta.')
+        resposta_texto = dados_resposta.get('choices', [{}])[0].get('text', '').strip()
 
         historico_conversa.append({"role": "assistant", "content": resposta_texto})
 
