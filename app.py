@@ -1,15 +1,15 @@
 from flask import Flask, request, jsonify, render_template
 import requests
+import os
 
 app = Flask(__name__)
 
-# -------- Together AI Config --------
+# Configuração da Together API
 TOGETHER_API_URL = 'https://api.together.xyz/v1/chat/completions'
 TOGETHER_API_KEY = '2cf51a2b235f73a6fac6335f527a29e8e893646c5b381a0c791c1c99ec2b31d1'
-TOGETHER_MODEL = 'meta-llama/Llama-3-70b-instruct-turbo'
+TOGETHER_MODEL = 'meta-llama/Llama-3-70b-instruct-turbo-free'
 
-HISTORICO_MAX = 10  # Memória de curto prazo (últimas 10 mensagens)
-
+HISTORICO_MAX = 10
 historico_conversa = []
 
 # -------- Treinamento Premium --------
@@ -64,37 +64,22 @@ def chat():
     if not mensagem_usuario:
         return jsonify({'error': 'Mensagem vazia. Por favor, envie uma pergunta.'}), 400
 
-    # Atualizar memória de curto prazo
+    # Atualizar histórico
     historico_conversa.append({"role": "user", "content": mensagem_usuario})
     if len(historico_conversa) > HISTORICO_MAX:
         historico_conversa = historico_conversa[-HISTORICO_MAX:]
 
-    # Se o usuário pedir resposta curta
-    prompt_resposta_curta = ""
-    if "responda em 1 linha" in mensagem_usuario.lower() or "resposta fácil" in mensagem_usuario.lower() or "resposta simples" in mensagem_usuario.lower():
-        prompt_resposta_curta = "\nIMPORTANTE: Responda essa pergunta com no máximo 1 linha, de forma extremamente simples e objetiva."
-
-    # Remover mensagens com "Bem-vindo" da memória
-    historico_filtrado = []
+    # Montar mensagens no formato OpenAI Chat API
+    messages = [{"role": "system", "content": treinamento_premium}]
     for msg in historico_conversa:
-        if "bem-vindo" not in msg["content"].lower():
-            historico_filtrado.append(msg)
-    historico_conversa = historico_filtrado[-HISTORICO_MAX:]
+        role = "user" if msg["role"] == "user" else "assistant"
+        messages.append({"role": role, "content": msg["content"]})
 
-    # Monta o histórico para o prompt
-    historico_texto = ""
-    for msg in historico_conversa:
-        historico_texto += f"{msg['role'].upper()}: {msg['content']}\n"
-
-    prompt_final = f"{treinamento_premium}\n\nHISTÓRICO DE CONVERSA:\n{historico_texto}\n\nPergunta atual:\n{mensagem_usuario}\n{prompt_resposta_curta}"
-
-    # Configuração para a API do Together AI
     payload = {
         "model": TOGETHER_MODEL,
-        "prompt": prompt_final,
-        "max_tokens": 512,
+        "messages": messages,
         "temperature": 0.7,
-        "stop": ["USER:", "ASSISTANT:"]
+        "max_tokens": 512
     }
 
     headers = {
@@ -106,7 +91,7 @@ def chat():
         resposta_api = requests.post(TOGETHER_API_URL, json=payload, headers=headers)
         resposta_api.raise_for_status()
         dados_resposta = resposta_api.json()
-        resposta_texto = dados_resposta.get('choices', [{}])[0].get('text', '').strip()
+        resposta_texto = dados_resposta['choices'][0]['message']['content'].strip()
 
         historico_conversa.append({"role": "assistant", "content": resposta_texto})
 
